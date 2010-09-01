@@ -77,11 +77,24 @@ module LogParser
         when /^Parameters/, /^Cookie set/, /^Rendering/,
           /^Redirected/ then
           # nothing
+        when /^Started (\S+) "(\S+)" for (\S+) at (.*)/ then
+          next if @in_component > 0
+          @url   = $2
+          @ip   = $3
+          @time = $4
         when /^Processing ([\S]+) \(for (.+) at (.*)\)/ then
           next if @in_component > 0
           @page = $1
           @ip   = $2
           @time = $3
+        when /^Processing by ([\S]+) as (\S+)$/ then
+          next if @in_component > 0
+          @page = $1
+        when /^Completed (\d+) (\S+) in (\S+) \(Views: (\S+) \| ActiveRecord: (\S+)\)/ then
+          next if @in_component > 0
+          @request_time = $3.to_f
+          @render_time = $4.to_f
+          @db_time = $5.to_f
         when /^Completed in ([\S]+) .+ Rendering: ([\S]+) .+ DB: ([\S]+)/ then
           next if @in_component > 0
           @request_time = $1.to_f
@@ -154,6 +167,5 @@ module LogParser
       yield LogEntry.new(data)
     end
   end
-
 end
 
