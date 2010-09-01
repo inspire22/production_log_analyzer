@@ -325,9 +325,8 @@ class Analyzer
     list = []
 
     # header
-    record = [pad_request_name("#{title} Summary"), 'Count', 'Avg', 'Std Dev',
-              'Min', 'Max']
-    list << record.join("\t")
+    record = [pad_request_name("#{title} Summary"), 'Count', '       Avg', '   Std Dev', '       Min', '       Max']
+    list << record.join(" ")
 
     # all requests
     all_times = records.values.flatten
@@ -335,18 +334,18 @@ class Analyzer
       all_times.average, all_times.standard_deviation, all_times.min,
       all_times.max
     ]
-    record.map! { |v| "%0.3f" % v }
-    record.unshift [pad_request_name('ALL REQUESTS'), all_times.size]
-    list << record.join("\t")
+    record.map! { |v| "%10.3f" % v }
+    record.unshift [pad_request_name('ALL REQUESTS'), '%5d' % all_times.size]
+    list << record.join(" ")
 
     # spacer
     list << nil
 
     records.sort_by { |k,v| [-v.size, k] }.each do |req, times|
       record = [times.average, times.standard_deviation, times.min, times.max]
-      record.map! { |v| "%0.3f" % v }
-      record.unshift ["#{pad_request_name req}", times.size]
-      list << record.join("\t")
+      record.map! { |v| "%10.3f" % v }
+      record.unshift ["#{pad_request_name req}", "%5d" % times.size]
+      list << record.join(" ")
     end
 
     return list.join("\n")
