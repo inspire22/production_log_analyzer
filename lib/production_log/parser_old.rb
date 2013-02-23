@@ -73,32 +73,38 @@ module LogParser
     def parse(entry)
       entry = entry.split(/\n/) if String === entry
       entry.each do |line|
-        $stderr.puts "line: #{line}"
         case line
         when /^Parameters/, /^Cookie set/, /^Rendering/,
-          /^Redirected/, /^\*/ then
+          /^Redirected/ then
           # nothing
-        # when /^Processing ([\S]+) \(for (.+) at (.*)\)/ then
-        #Started GET "/user/edit/SheWolfNLust" for 71.202.110.154 at 2013-02-22 18:14:21 -0600
-        when /^Started \w+ "([\S]+)" for (.+) at (.*)/ then          
+        when /^Started (\S+) "(\S+)" for (\S+) at (.*)/ then
+          next if @in_component > 0
+          @url   = $2
+          @ip   = $3
+          @time = $4
+        when /^Processing ([\S]+) \(for (.+) at (.*)\)/ then
           next if @in_component > 0
           @page = $1
           @ip   = $2
           @time = $3
-        #Completed 404 Not Found in 9ms (Views: 2.0ms | ActiveRecord: 0.9ms | Solr: 0.0ms)
-        #Completed 200 OK in 42ms (Views: 1.1ms | ActiveRecord: 4.5ms | Solr: 0.0ms)
-        # when /^Completed .*? in ([\S]+) .+ Rendering: ([\S]+) .+ DB: ([\S]+)/ then
-        when /^Completed .+ in ([\S]+) \(Views: ([\S]+) \| ActiveRecord: ([\S]+)/ then   
-          #$stderr.puts "completed with 1: #{$1} 2: #{$2} 3: #{$3}"
+        when /^Processing by ([\S]+) as (\S+)$/ then
+          next if @in_component > 0
+          @page = $1
+        when /^Completed (\d+) (\S+) in (\S+) \(Views: (\S+) \| ActiveRecord: (\S+)\)/ then
+          next if @in_component > 0
+          @request_time = $3.to_f
+          @render_time = $4.to_f
+          @db_time = $5.to_f
+        when /^Completed in ([\S]+) .+ Rendering: ([\S]+) .+ DB: ([\S]+)/ then
           next if @in_component > 0
           @request_time = $1.to_f
           @render_time = $2.to_f
           @db_time = $3.to_f
-        # when /^Completed .*? in ([\S]+) .+ DB: ([\S]+)/ then # Redirect
-        #   next if @in_component > 0
-        #   @request_time = $1.to_f
-        #   @render_time = 0
-        #   @db_time = $2.to_f
+        when /^Completed in ([\S]+) .+ DB: ([\S]+)/ then # Redirect
+          next if @in_component > 0
+          @request_time = $1.to_f
+          @render_time = 0
+          @db_time = $2.to_f
         when /(.+?) \(([^)]+)\)   / then
           @queries << [$1, $2.to_f]
         when /^Start rendering component / then
@@ -137,9 +143,7 @@ module LogParser
     comp_count = Hash.new 0
 
     stream.each_line do |line|
-      #$stderr.puts "stream line: #{line}"
-      # line =~ / ([^ ]+) ([^ ]+)\[(\d+)\]: (.*)/
-      line =~ / ([^ ]+) ([^ ]+)\[(\d+)\]: (.*)/      
+      line =~ / ([^ ]+) ([^ ]+)\[(\d+)\]: (.*)/
       next if $2.nil? or $2 == 'newsyslog'
       bucket = [$1, $2, $3].join '-'
       data = $4
@@ -163,6 +167,5 @@ module LogParser
       yield LogEntry.new(data)
     end
   end
-
 end
 
