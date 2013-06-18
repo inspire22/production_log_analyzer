@@ -2,6 +2,7 @@
 
 require 'production_log/analyzer'
 
+start = Time.now
 file_name = ARGV.shift
 
 if file_name.nil? then
@@ -33,3 +34,4 @@ else
   Analyzer.email file_name, email_recipient, subject, count
 end
 
+puts "Completed report in #{(Time.now - start)/60} minutes"

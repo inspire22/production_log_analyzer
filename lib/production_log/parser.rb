@@ -73,7 +73,7 @@ module LogParser
     def parse(entry)
       entry = entry.split(/\n/) if String === entry
       entry.each do |line|
-        $stderr.puts "line: #{line}"
+        # $stderr.puts "line: #{line}"
         case line
         when /^Parameters/, /^Cookie set/, /^Rendering/,
           /^Redirected/, /^\*/ then
@@ -82,7 +82,7 @@ module LogParser
         #Started GET "/user/edit/SheWolfNLust" for 71.202.110.154 at 2013-02-22 18:14:21 -0600
         when /^Started \w+ "([\S]+)" for (.+) at (.*)/ then          
           next if @in_component > 0
-          @page = $1
+          @page = normalize_page $1
           @ip   = $2
           @time = $3
         #Completed 404 Not Found in 9ms (Views: 2.0ms | ActiveRecord: 0.9ms | Solr: 0.0ms)
@@ -112,6 +112,23 @@ module LogParser
       end
     end
 
+    # hmm, usernames are difficult.  I guess they'll just be stripped out
+    # easiest way to solve this would be to just show by controller name instead of by url.
+    def normalize_page(url)
+      url.gsub!(/\/show\/.*$/,'/show/num')
+      # url.gsub!(/^(.+\/\d+.*)$/,"#{$1}/num")
+      url.gsub!(/^(.+)\/\d+.*$/,'\1/num')
+      # bugs end up with percents & long urls
+      url.gsub!(/^(.*)%.*$/,'\1/percent')  
+      url.gsub!(/^(.*)\?.*$/,'\1?args') 
+      
+      url.gsub!(/\/user\/edit\/.*$/,'/user/edit/num')
+            
+      # misc others causing problems with me.  disable if we need to track these
+      url.gsub! %r#/^(\/home\/level).*$#, '/ignored'
+      url
+    end
+    
     def ==(other) # :nodoc:
       other.class == self.class and
       other.page == self.page and

@@ -1,7 +1,6 @@
 #!/usr/local/bin/ruby -w
 
 require 'production_log/action_grep'
-
 action_name = ARGV.shift
 file_name = ARGV.shift
 

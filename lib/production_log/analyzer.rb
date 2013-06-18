@@ -342,6 +342,7 @@ class Analyzer
     list << nil
 
     records.sort_by { |k,v| [-v.size, k] }.each do |req, times|
+      next if times.size < 3
       record = [times.average, times.standard_deviation, times.min, times.max]
       record.map! { |v| "%10.3f" % v }
       record.unshift ["#{pad_request_name req}", "%5d" % times.size]
@@ -383,6 +384,7 @@ class Analyzer
     end
 
     @longest_req = names.max
+    @longest_req = 52 if @longest_req > 52
 
     @longest_req = 'Unknown'.length + 1 if @longest_req.nil?
 
@@ -391,6 +393,7 @@ class Analyzer
 
   def pad_request_name(name) # :nodoc:
     name = (name||'Unknown') + ':' # HACK where does nil come from?
+    name = name[0..52] if name.length > 52 # kevin: max request length
     padding_width = longest_request_name - name.length
     padding_width = 0 if padding_width < 0
     name += (' ' * padding_width)
